@@ -18,7 +18,7 @@
       </div>
 
       <div class="play-area">
-        <canvas id="gameCanvas" width="300" height="600" aria-label="Tetris game board"></canvas>
+        <canvas id="gameCanvas" width="300" height="600" aria-label="Tetris game board" tabindex="0"></canvas>
         <aside class="side-panels">
           <div class="mini-panel">
             <h2>Next</h2>
@@ -39,6 +39,7 @@
               <li><kbd>Space</kbd> Hard drop</li>
               <li><kbd>C</kbd> Hold piece</li>
               <li><kbd>P</kbd> Pause/Resume</li>
+              <li><kbd>D</kbd> Toggle debug logs</li>
             </ul>
           </div>
         </aside>
@@ -47,6 +48,7 @@
       <div class="button-row">
         <button id="pauseBtn" type="button">Pause</button>
         <button id="restartBtn" type="button">Restart</button>
+        <button id="debugBtn" type="button">Debug: Off</button>
       </div>
     </section>
 

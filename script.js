@@ -104,6 +104,7 @@ const saveScoreBtn = document.getElementById("saveScoreBtn");
 const skipSaveBtn = document.getElementById("skipSaveBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const restartBtn = document.getElementById("restartBtn");
+const debugBtn = document.getElementById("debugBtn");
 
 let board = createBoard();
 let playerName = "";
@@ -117,9 +118,35 @@ let lastFrameTime = 0;
 let holdType = null;
 let canHold = true;
 let pendingSaveScore = 0;
+let debugMode = false;
 
 let pieceQueue = [];
 let currentPiece = null;
+
+function describePiece(piece = currentPiece) {
+  if (!piece) {
+    return null;
+  }
+  return {
+    type: piece.type,
+    rotation: piece.rotation,
+    x: piece.x,
+    y: piece.y,
+  };
+}
+
+function debugLog(eventName, extra = {}) {
+  if (!debugMode) {
+    return;
+  }
+  console.log("[TetrisDebug]", eventName, { piece: describePiece(), ...extra });
+}
+
+function toggleDebugMode() {
+  debugMode = !debugMode;
+  debugBtn.textContent = `Debug: ${debugMode ? "On" : "Off"}`;
+  console.log("[TetrisDebug]", `Debug mode ${debugMode ? "enabled" : "disabled"}`);
+}
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -218,6 +245,7 @@ function spawnPiece() {
   currentPiece = piece;
   canHold = true;
   drawPreviews();
+  debugLog("spawnPiece", { queueNext: pieceQueue[0] || null });
 }
 
 function movePiece(dx, dy) {
@@ -230,8 +258,10 @@ function movePiece(dx, dy) {
   moved.y += dy;
   if (!collides(moved)) {
     currentPiece = moved;
+    debugLog("movePiece", { dx, dy });
     return true;
   }
+  debugLog("moveBlocked", { dx, dy });
   return false;
 }
 
@@ -249,12 +279,18 @@ function rotatePiece(direction) {
     test.x += offset;
     if (!collides(test)) {
       currentPiece = test;
+      debugLog("rotatePiece", { direction, kick: offset });
       return;
     }
   }
+  debugLog("rotateBlocked", { direction });
 }
 
 function lockPiece() {
+  if (!currentPiece) {
+    return;
+  }
+  debugLog("lockPiece");
   mergePiece(currentPiece);
   clearLines();
   spawnPiece();
@@ -270,6 +306,7 @@ function hardDrop() {
   }
   score += distance * 2;
   updateHud();
+  debugLog("hardDrop", { distance });
   lockPiece();
   dropAccumulator = 0;
 }
@@ -278,6 +315,7 @@ function softDrop() {
   if (movePiece(0, 1)) {
     score += 1;
     updateHud();
+    debugLog("softDropScored", { score });
   }
 }
 
@@ -306,6 +344,7 @@ function holdCurrentPiece() {
 
   canHold = false;
   drawPreviews();
+  debugLog("holdCurrentPiece", { holdType, swappedWith: oldType || null });
 }
 
 function getGhostPiece() {
@@ -492,6 +531,7 @@ function triggerGameOver() {
   isOver = true;
   pendingSaveScore = score;
   gameOverText.textContent = `${playerName}, your score is ${score}.`;
+  debugLog("triggerGameOver", { score });
   showGameOverModal();
 }
 
@@ -522,7 +562,7 @@ function gameLoop(timestamp) {
   const delta = timestamp - lastFrameTime;
   lastFrameTime = timestamp;
 
-  if (!isPaused && !isOver) {
+  if (!isPaused && !isOver && currentPiece) {
     dropAccumulator += delta;
     const interval = getDropInterval();
 
@@ -555,6 +595,7 @@ function restartGame() {
   hideOverlay();
   resetGameState();
   pauseBtn.textContent = "Pause";
+  gameCanvas.focus();
 }
 
 function handleKey(event) {
@@ -563,8 +604,16 @@ function handleKey(event) {
   }
 
   const key = event.key;
-  if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " ", "z", "Z", "c", "C", "p", "P"].includes(key)) {
+  if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " ", "Space", "Spacebar", "z", "Z", "c", "C", "p", "P", "d", "D"].includes(key)) {
     event.preventDefault();
+  }
+  if (debugMode) {
+    console.log("[TetrisDebug]", "keydown", key);
+  }
+
+  if (key === "d" || key === "D") {
+    toggleDebugMode();
+    return;
   }
 
   if (key === "p" || key === "P") {
@@ -594,6 +643,8 @@ function handleKey(event) {
       rotatePiece(-1);
       break;
     case " ":
+    case "Space":
+    case "Spacebar":
       hardDrop();
       break;
     case "c":
@@ -616,6 +667,7 @@ startBtn.addEventListener("click", () => {
   hideOverlay();
   resetGameState();
   pauseBtn.textContent = "Pause";
+  gameCanvas.focus();
 });
 
 saveScoreBtn.addEventListener("click", () => {
@@ -631,12 +683,13 @@ skipSaveBtn.addEventListener("click", () => {
 
 pauseBtn.addEventListener("click", togglePause);
 restartBtn.addEventListener("click", restartGame);
+debugBtn.addEventListener("click", toggleDebugMode);
 playerNameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     startBtn.click();
   }
 });
-document.addEventListener("keydown", handleKey);
+window.addEventListener("keydown", handleKey);
 
 renderLeaderboard();
 showStartModal();
