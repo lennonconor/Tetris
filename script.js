@@ -7,6 +7,10 @@ const LINES_PER_LEVEL = 15;
 const BASE_DROP_MS = 1000;
 const SPEED_MULTIPLIER = 0.9;
 const LEADERBOARD_KEY = "tetrisLeaderboardV1";
+const REPEAT_DELAY_MS = 170;
+const REPEAT_INTERVAL_MS = 70;
+const GESTURE_TAP_MAX_DISTANCE = 12;
+const GESTURE_SWIPE_MIN_DISTANCE = 24;
 
 const PIECES = {
   I: {
@@ -105,6 +109,14 @@ const skipSaveBtn = document.getElementById("skipSaveBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const restartBtn = document.getElementById("restartBtn");
 const debugBtn = document.getElementById("debugBtn");
+const mobileLeftBtn = document.getElementById("mobileLeftBtn");
+const mobileRightBtn = document.getElementById("mobileRightBtn");
+const mobileSoftDropBtn = document.getElementById("mobileSoftDropBtn");
+const mobileHardDropBtn = document.getElementById("mobileHardDropBtn");
+const mobileRotateCwBtn = document.getElementById("mobileRotateCwBtn");
+const mobileRotateCcwBtn = document.getElementById("mobileRotateCcwBtn");
+const mobileHoldBtn = document.getElementById("mobileHoldBtn");
+const mobilePauseBtn = document.getElementById("mobilePauseBtn");
 
 let board = createBoard();
 let playerName = "";
@@ -122,6 +134,8 @@ let debugMode = false;
 
 let pieceQueue = [];
 let currentPiece = null;
+const repeatState = new Map();
+let gestureState = null;
 
 function describePiece(piece = currentPiece) {
   if (!piece) {
@@ -146,6 +160,144 @@ function toggleDebugMode() {
   debugMode = !debugMode;
   debugBtn.textContent = `Debug: ${debugMode ? "On" : "Off"}`;
   console.log("[TetrisDebug]", `Debug mode ${debugMode ? "enabled" : "disabled"}`);
+}
+
+function canAcceptInput() {
+  return Boolean(playerName) && !(overlay.classList.contains("visible") && !startModal.classList.contains("hidden"));
+}
+
+function setPauseLabels() {
+  const label = isPaused ? "Resume" : "Pause";
+  pauseBtn.textContent = label;
+  if (mobilePauseBtn) {
+    mobilePauseBtn.textContent = label;
+  }
+}
+
+function runGameAction(action, allowWhenPaused = false) {
+  if (!canAcceptInput()) {
+    return;
+  }
+  if ((isPaused && !allowWhenPaused) || isOver) {
+    return;
+  }
+  action();
+  gameCanvas.focus();
+}
+
+function stopRepeat(key) {
+  const state = repeatState.get(key);
+  if (!state) {
+    return;
+  }
+  if (state.delayId) {
+    clearTimeout(state.delayId);
+  }
+  if (state.intervalId) {
+    clearInterval(state.intervalId);
+  }
+  repeatState.delete(key);
+}
+
+function stopAllRepeats() {
+  for (const key of repeatState.keys()) {
+    stopRepeat(key);
+  }
+}
+
+function startRepeat(key, action) {
+  stopRepeat(key);
+  runGameAction(action);
+  const delayId = setTimeout(() => {
+    const intervalId = setInterval(() => {
+      runGameAction(action);
+    }, REPEAT_INTERVAL_MS);
+    const current = repeatState.get(key);
+    if (current) {
+      current.intervalId = intervalId;
+    } else {
+      clearInterval(intervalId);
+    }
+  }, REPEAT_DELAY_MS);
+  repeatState.set(key, { delayId, intervalId: null });
+}
+
+function bindRepeatButton(button, key, action) {
+  if (!button) {
+    return;
+  }
+
+  const stop = (event) => {
+    event.preventDefault();
+    stopRepeat(key);
+  };
+
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    startRepeat(key, action);
+  });
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointercancel", stop);
+  button.addEventListener("pointerleave", stop);
+}
+
+function bindSingleActionButton(button, action, allowWhenPaused = false) {
+  if (!button) {
+    return;
+  }
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    runGameAction(action, allowWhenPaused);
+  });
+}
+
+function bindCanvasGestures() {
+  gameCanvas.addEventListener("pointerdown", (event) => {
+    if (!canAcceptInput()) {
+      return;
+    }
+    event.preventDefault();
+    gestureState = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  });
+
+  gameCanvas.addEventListener("pointerup", (event) => {
+    if (!gestureState || gestureState.id !== event.pointerId) {
+      return;
+    }
+    event.preventDefault();
+    const dx = event.clientX - gestureState.x;
+    const dy = event.clientY - gestureState.y;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    gestureState = null;
+
+    if (absX <= GESTURE_TAP_MAX_DISTANCE && absY <= GESTURE_TAP_MAX_DISTANCE) {
+      runGameAction(() => rotatePiece(1));
+      return;
+    }
+
+    if (absX > absY && absX >= GESTURE_SWIPE_MIN_DISTANCE) {
+      runGameAction(() => movePiece(dx < 0 ? -1 : 1, 0));
+      return;
+    }
+
+    if (dy > 0 && absY >= GESTURE_SWIPE_MIN_DISTANCE) {
+      runGameAction(hardDrop);
+      return;
+    }
+
+    if (dy < 0 && absY >= GESTURE_SWIPE_MIN_DISTANCE) {
+      runGameAction(() => rotatePiece(-1));
+    }
+  });
+
+  gameCanvas.addEventListener("pointercancel", () => {
+    gestureState = null;
+  });
 }
 
 function createBoard() {
@@ -529,6 +681,7 @@ function hideOverlay() {
 
 function triggerGameOver() {
   isOver = true;
+  stopAllRepeats();
   pendingSaveScore = score;
   gameOverText.textContent = `${playerName}, your score is ${score}.`;
   debugLog("triggerGameOver", { score });
@@ -536,6 +689,7 @@ function triggerGameOver() {
 }
 
 function resetGameState() {
+  stopAllRepeats();
   board = createBoard();
   score = 0;
   linesCleared = 0;
@@ -551,6 +705,7 @@ function resetGameState() {
   ensureQueue();
   spawnPiece();
   updateHud();
+  setPauseLabels();
   drawBoard();
 }
 
@@ -584,7 +739,7 @@ function togglePause() {
     return;
   }
   isPaused = !isPaused;
-  pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+  setPauseLabels();
 }
 
 function restartGame() {
@@ -594,12 +749,12 @@ function restartGame() {
   }
   hideOverlay();
   resetGameState();
-  pauseBtn.textContent = "Pause";
+  setPauseLabels();
   gameCanvas.focus();
 }
 
 function handleKey(event) {
-  if (!playerName || (overlay.classList.contains("visible") && !startModal.classList.contains("hidden"))) {
+  if (!canAcceptInput()) {
     return;
   }
 
@@ -666,7 +821,7 @@ startBtn.addEventListener("click", () => {
   playerName = name;
   hideOverlay();
   resetGameState();
-  pauseBtn.textContent = "Pause";
+  setPauseLabels();
   gameCanvas.focus();
 });
 
@@ -684,6 +839,15 @@ skipSaveBtn.addEventListener("click", () => {
 pauseBtn.addEventListener("click", togglePause);
 restartBtn.addEventListener("click", restartGame);
 debugBtn.addEventListener("click", toggleDebugMode);
+bindRepeatButton(mobileLeftBtn, "left", () => movePiece(-1, 0));
+bindRepeatButton(mobileRightBtn, "right", () => movePiece(1, 0));
+bindRepeatButton(mobileSoftDropBtn, "down", softDrop);
+bindSingleActionButton(mobileRotateCwBtn, () => rotatePiece(1));
+bindSingleActionButton(mobileRotateCcwBtn, () => rotatePiece(-1));
+bindSingleActionButton(mobileHardDropBtn, hardDrop);
+bindSingleActionButton(mobileHoldBtn, holdCurrentPiece);
+bindSingleActionButton(mobilePauseBtn, togglePause, true);
+bindCanvasGestures();
 playerNameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     startBtn.click();

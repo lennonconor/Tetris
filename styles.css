@@ -88,6 +88,7 @@ h2 {
   background: #020617;
   border: 2px solid var(--line);
   border-radius: 8px;
+  touch-action: none;
 }
 
 .side-panels {
@@ -132,6 +133,15 @@ kbd {
   display: flex;
   gap: 10px;
   margin-top: 12px;
+}
+
+.mobile-controls {
+  display: none;
+}
+
+.mobile-row {
+  display: flex;
+  gap: 8px;
 }
 
 button,
@@ -232,5 +242,20 @@ button:active {
 
   #gameCanvas {
     margin: 0 auto;
+  }
+
+  .mobile-controls {
+    margin-top: 12px;
+    display: grid;
+    gap: 8px;
+    touch-action: none;
+  }
+
+  .mobile-controls button {
+    flex: 1;
+    min-height: 56px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    touch-action: none;
   }
 }
