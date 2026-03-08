@@ -1,0 +1,43 @@
+{
+  "name": "tetris-web",
+  "entrypoints": [
+    "index.html",
+    "script.js",
+    "styles.css"
+  ],
+  "files": {
+    "index.html": {
+      "role": "DOM layout, game canvases, modals, desktop controls, mobile controls",
+      "depends_on": [
+        "styles.css",
+        "script.js"
+      ]
+    },
+    "styles.css": {
+      "role": "Visual styling, responsive layout, touch control presentation",
+      "depends_on": []
+    },
+    "script.js": {
+      "role": "State model, gameplay rules, rendering, input handling, persistence",
+      "depends_on": [
+        "index.html"
+      ],
+      "key_sections": {
+        "state": "top-level constants and mutable game state",
+        "input": "keyboard handlers, mobile buttons, pointer gestures",
+        "gameplay": "collision, movement, rotation, locking, line clearing",
+        "rendering": "drawBoard + preview rendering",
+        "lifecycle": "start/restart/pause/game-over/loop",
+        "storage": "leaderboard load/save via localStorage"
+      }
+    },
+    "docs/ai/*.md": {
+      "role": "AI-oriented architecture, behavior, and change guidance",
+      "depends_on": [
+        "script.js",
+        "index.html",
+        "styles.css"
+      ]
+    }
+  }
+}

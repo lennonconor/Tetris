@@ -54,6 +54,19 @@ For best compatibility, use a current Chromium, Firefox, or Safari release.
 - `index.html`: Game layout and UI elements
 - `styles.css`: Visual styling
 - `script.js`: Game logic, rendering, controls, and leaderboard handling
+- `docs/ai/`: AI-oriented project documentation and machine-friendly maps
+
+## AI Documentation
+
+- `docs/ai/PROJECT_OVERVIEW.md`
+- `docs/ai/STATE_MODEL.md`
+- `docs/ai/INPUT_MAP.md`
+- `docs/ai/RENDERING.md`
+- `docs/ai/DEBUGGING.md`
+- `docs/ai/CHANGE_GUIDE.md`
+- `docs/ai/project-map.json`
+- `docs/ai/glossary.yml`
+- `AGENTS.md`
 
 ## Debug Mode
 

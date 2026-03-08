@@ -1,0 +1,29 @@
+terms:
+  board:
+    definition: "The 10x20 grid storing locked blocks."
+  currentPiece:
+    definition: "The active falling tetromino."
+  pieceQueue:
+    definition: "Upcoming piece types, replenished with 7-bag randomization."
+  holdType:
+    definition: "Currently held piece type, if any."
+  ghostPiece:
+    definition: "Projected landing position of currentPiece."
+  softDrop:
+    definition: "Manual downward movement by one row with +1 score on success."
+  hardDrop:
+    definition: "Immediate drop to landing row with +2 score per row traveled."
+  lockPiece:
+    definition: "Merges currentPiece into board, clears lines, then spawns next."
+  collides:
+    definition: "Collision test against walls, floor, and locked blocks."
+  kick:
+    definition: "Horizontal offset tested after rotation to allow fitting near walls."
+  overlay:
+    definition: "Modal layer used for start and game-over flows."
+  repeatState:
+    definition: "Timer tracking structure for mobile hold-to-repeat controls."
+  gestureState:
+    definition: "Pointer tracking object used to interpret tap/swipe on canvas."
+  debugMode:
+    definition: "When enabled, emits gameplay diagnostics to browser console."
