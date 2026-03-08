@@ -18,7 +18,13 @@
       </div>
 
       <div class="play-area">
-        <canvas id="gameCanvas" width="300" height="600" aria-label="Tetris game board" tabindex="0"></canvas>
+        <div class="board-column">
+          <div class="mobile-next-panel">
+            <h2>Next</h2>
+            <canvas id="mobileNextCanvas" width="72" height="72" aria-label="Next piece (mobile)"></canvas>
+          </div>
+          <canvas id="gameCanvas" width="300" height="600" aria-label="Tetris game board" tabindex="0"></canvas>
+        </div>
         <aside class="side-panels">
           <div class="mini-panel">
             <h2>Next</h2>

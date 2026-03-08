@@ -87,9 +87,11 @@ const SCORE_BY_CLEAR = {
 
 const gameCanvas = document.getElementById("gameCanvas");
 const nextCanvas = document.getElementById("nextCanvas");
+const mobileNextCanvas = document.getElementById("mobileNextCanvas");
 const holdCanvas = document.getElementById("holdCanvas");
 const gameCtx = gameCanvas.getContext("2d");
 const nextCtx = nextCanvas.getContext("2d");
+const mobileNextCtx = mobileNextCanvas.getContext("2d");
 const holdCtx = holdCanvas.getContext("2d");
 
 const scoreLabel = document.getElementById("scoreLabel");
@@ -603,6 +605,7 @@ function drawPreview(ctx, type) {
 
 function drawPreviews() {
   drawPreview(nextCtx, pieceQueue[0]);
+  drawPreview(mobileNextCtx, pieceQueue[0]);
   drawPreview(holdCtx, holdType);
 }
 

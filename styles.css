@@ -82,6 +82,35 @@ h2 {
   gap: 12px;
 }
 
+.board-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-next-panel {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.mobile-next-panel h2 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+#mobileNextCanvas {
+  width: 52px;
+  height: 52px;
+  background: #020617;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
 #gameCanvas {
   width: 300px;
   height: 600px;
@@ -238,6 +267,14 @@ button:active {
 
   .play-area {
     grid-template-columns: 1fr;
+  }
+
+  .side-panels {
+    display: none;
+  }
+
+  .mobile-next-panel {
+    display: flex;
   }
 
   #gameCanvas {
