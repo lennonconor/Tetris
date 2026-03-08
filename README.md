@@ -2,6 +2,8 @@
 
 A browser-based Tetris game built with vanilla HTML, CSS, and JavaScript.
 
+Live game: https://lennonconor.github.io/Tetris (hosted via GitHub Pages).
+
 ## Overview
 
 This project implements a playable Tetris experience with:
