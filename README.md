@@ -14,8 +14,11 @@ This project implements a playable Tetris experience with:
 - Pause/resume and restart
 - Local leaderboard (stored in browser `localStorage`)
 - Debug mode toggle for input/state logging
+- Mobile touch support (on-screen controls + gestures)
 
 ## Controls
+
+Desktop / Keyboard:
 
 - `Left Arrow`: Move left
 - `Right Arrow`: Move right
@@ -26,6 +29,16 @@ This project implements a playable Tetris experience with:
 - `C`: Hold piece
 - `P`: Pause/resume
 - `D`: Toggle debug logs
+
+Mobile / Touch:
+
+- On-screen buttons: left, right, soft drop, hard drop, rotate CW, rotate CCW, hold, pause
+- Hold left/right/down buttons for repeated movement/drop
+- Canvas gestures:
+  - Tap: Rotate clockwise
+  - Swipe left/right: Move piece
+  - Swipe down: Hard drop
+  - Swipe up: Rotate counter-clockwise
 
 ## Running Locally
 
@@ -49,7 +62,6 @@ When enabled, gameplay events are logged in the browser console under the `[Tetr
 
 ## Future Improvements
 
-- Mobile touch controls
 - Sound effects and music
 - Better rotation kick system parity
 - Optional persistent player profiles
