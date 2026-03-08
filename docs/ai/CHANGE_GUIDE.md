@@ -26,10 +26,10 @@ After gameplay-related edits, manually verify:
 5. Hold works once per active piece
 6. Pause/resume works from desktop and mobile controls
 7. Touch controls and gestures work on mobile viewport
-8. Game over modal appears and restart path works
+8. Mobile Next preview is visible above the active play area during gameplay
+9. Game over modal appears and restart path works
 
 ## Local Verification Commands
 
 - Syntax check: `node --check script.js`
 - Review changed files: `git status --short`
-

@@ -16,7 +16,8 @@ Draw order:
 
 `drawPreviews()` updates:
 
-- next piece canvas
+- desktop next piece canvas
+- mobile next piece canvas (small panel above board on mobile viewport)
 - hold piece canvas
 
 `drawPreview(ctx, type)` centers a piece in the preview panel.
@@ -41,4 +42,3 @@ Draw order:
 
 Any lock/merge path must not run when `currentPiece` is `null`.
 This is already guarded in `lockPiece()` and loop gating.
-

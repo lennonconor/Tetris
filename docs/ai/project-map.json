@@ -7,14 +7,14 @@
   ],
   "files": {
     "index.html": {
-      "role": "DOM layout, game canvases, modals, desktop controls, mobile controls",
+      "role": "DOM layout, game canvases, modals, desktop controls, mobile controls, mobile top Next preview panel",
       "depends_on": [
         "styles.css",
         "script.js"
       ]
     },
     "styles.css": {
-      "role": "Visual styling, responsive layout, touch control presentation",
+      "role": "Visual styling, responsive layout, touch control presentation, mobile visibility/layout rules for Next panel",
       "depends_on": []
     },
     "script.js": {

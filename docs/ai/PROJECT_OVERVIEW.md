@@ -17,6 +17,7 @@ This repository is a browser Tetris game implemented with plain HTML, CSS, and J
 - 7-bag piece randomization
 - Piece movement, rotation (with simple wall kicks), soft drop, hard drop
 - Hold piece and next-piece preview
+- Mobile layout shows a compact Next preview above the active board for visibility during play
 - Score/lines/level progression
 - Pause/resume and restart
 - Local leaderboard via `localStorage`
@@ -37,7 +38,6 @@ Per frame:
 
 ## Important Files
 
-- `index.html`: DOM structure, canvases, modals, desktop/mobile controls
-- `styles.css`: desktop/mobile layout, panel styles, touch-related CSS (`touch-action`)
+- `index.html`: DOM structure, canvases, modals, desktop/mobile controls, mobile top Next panel
+- `styles.css`: desktop/mobile layout, panel styles, touch-related CSS (`touch-action`), mobile panel visibility rules
 - `script.js`: game state, piece physics, rendering, input mapping, leaderboard, debug
-
