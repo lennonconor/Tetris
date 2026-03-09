@@ -7,10 +7,12 @@ const LINES_PER_LEVEL = 15;
 const BASE_DROP_MS = 1000;
 const SPEED_MULTIPLIER = 0.9;
 const LEADERBOARD_KEY = "tetrisLeaderboardV1";
+const LEADERBOARD_LIMIT = 10;
 const REPEAT_DELAY_MS = 170;
 const REPEAT_INTERVAL_MS = 70;
 const GESTURE_TAP_MAX_DISTANCE = 12;
 const GESTURE_SWIPE_MIN_DISTANCE = 24;
+const API_BASE_URL = (window.TETRIS_API_BASE_URL || "").trim().replace(/\/+$/, "");
 
 const PIECES = {
   I: {
@@ -616,7 +618,23 @@ function updateHud() {
   playerNameLabel.textContent = playerName || "-";
 }
 
-function loadLeaderboard() {
+function normalizeLeaderboardEntries(entries) {
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+
+  return entries
+    .filter((item) => item && typeof item.name === "string" && typeof item.score === "number")
+    .map((item) => ({
+      name: item.name.slice(0, 20),
+      score: Math.max(0, Math.floor(item.score)),
+      at: typeof item.at === "number" ? item.at : Date.now(),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, LEADERBOARD_LIMIT);
+}
+
+function loadLocalLeaderboard() {
   const raw = localStorage.getItem(LEADERBOARD_KEY);
   if (!raw) {
     return [];
@@ -624,46 +642,115 @@ function loadLeaderboard() {
 
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed
-      .filter((item) => item && typeof item.name === "string" && typeof item.score === "number")
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+    return normalizeLeaderboardEntries(parsed);
   } catch {
     return [];
   }
 }
 
-function saveLeaderboard(entries) {
-  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, 10)));
+function saveLocalLeaderboard(entries) {
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(normalizeLeaderboardEntries(entries)));
 }
 
-function renderLeaderboard() {
-  const entries = loadLeaderboard();
+function renderLeaderboardEntries(entries) {
+  const normalized = normalizeLeaderboardEntries(entries);
   leaderboardList.innerHTML = "";
 
-  if (entries.length === 0) {
+  if (normalized.length === 0) {
     const li = document.createElement("li");
     li.textContent = "No scores yet";
     leaderboardList.appendChild(li);
     return;
   }
 
-  entries.forEach((entry) => {
+  normalized.forEach((entry) => {
     const li = document.createElement("li");
     li.textContent = `${entry.name} - ${entry.score}`;
     leaderboardList.appendChild(li);
   });
 }
 
-function addScoreToLeaderboard(name, value) {
-  const entries = loadLeaderboard();
+async function fetchLeaderboardFromApi() {
+  if (!API_BASE_URL) {
+    return null;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/leaderboard?limit=${LEADERBOARD_LIMIT}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Leaderboard fetch failed: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const entries = Array.isArray(payload) ? payload : payload?.entries;
+  return normalizeLeaderboardEntries(entries);
+}
+
+async function postScoreToApi(name, value) {
+  if (!API_BASE_URL) {
+    return null;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/leaderboard`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ name, score: value }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Leaderboard submit failed: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const entries = Array.isArray(payload) ? payload : payload?.entries;
+  return normalizeLeaderboardEntries(entries);
+}
+
+async function loadLeaderboard() {
+  if (API_BASE_URL) {
+    try {
+      const remoteEntries = await fetchLeaderboardFromApi();
+      if (remoteEntries) {
+        return remoteEntries;
+      }
+    } catch (error) {
+      console.warn("Remote leaderboard unavailable, using local fallback.", error);
+    }
+  }
+
+  return loadLocalLeaderboard();
+}
+
+async function renderLeaderboard() {
+  const entries = await loadLeaderboard();
+  renderLeaderboardEntries(entries);
+}
+
+async function addScoreToLeaderboard(name, value) {
+  if (API_BASE_URL) {
+    try {
+      const remoteEntries = await postScoreToApi(name, value);
+      if (remoteEntries) {
+        renderLeaderboardEntries(remoteEntries);
+        return;
+      }
+    } catch (error) {
+      console.warn("Remote score submit failed, storing score locally.", error);
+    }
+  }
+
+  const entries = loadLocalLeaderboard();
   entries.push({ name, score: value, at: Date.now() });
-  entries.sort((a, b) => b.score - a.score);
-  saveLeaderboard(entries);
-  renderLeaderboard();
+  saveLocalLeaderboard(entries);
+  renderLeaderboardEntries(entries);
 }
 
 function showStartModal() {
@@ -828,8 +915,8 @@ startBtn.addEventListener("click", () => {
   gameCanvas.focus();
 });
 
-saveScoreBtn.addEventListener("click", () => {
-  addScoreToLeaderboard(playerName, pendingSaveScore);
+saveScoreBtn.addEventListener("click", async () => {
+  await addScoreToLeaderboard(playerName, pendingSaveScore);
   hideOverlay();
   resetGameState();
 });
@@ -858,7 +945,9 @@ playerNameInput.addEventListener("keydown", (event) => {
 });
 window.addEventListener("keydown", handleKey);
 
-renderLeaderboard();
+renderLeaderboard().catch((error) => {
+  console.warn("Failed to render leaderboard.", error);
+});
 showStartModal();
 updateHud();
 requestAnimationFrame(gameLoop);

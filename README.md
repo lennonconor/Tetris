@@ -51,6 +51,27 @@ No build step is required.
 
 For best compatibility, use a current Chromium, Firefox, or Safari release.
 
+## Global Leaderboard Configuration
+
+By default, the game stores leaderboard scores in browser `localStorage`.
+To use a global leaderboard, configure a hosted API and set:
+
+```html
+<script>
+  window.TETRIS_API_BASE_URL = "https://your-api.example.com";
+</script>
+<script src="script.js"></script>
+```
+
+Expected API endpoints:
+
+- `GET /leaderboard?limit=10` -> returns either an array of entries or `{ "entries": [...] }`
+- `POST /leaderboard` with JSON body `{ "name": "Player", "score": 1234 }` -> returns either an array of entries or `{ "entries": [...] }`
+
+For a complete Supabase implementation guide included in this repository, see:
+
+- `docs/backend/SUPABASE_SETUP.md`
+
 ## Project Structure
 
 - `index.html`: Game layout and UI elements
